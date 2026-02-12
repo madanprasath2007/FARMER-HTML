@@ -1,0 +1,8 @@
+{
+  "name": "Smart Crop Advisory & Auction System",
+  "description": "A comprehensive seed-to-sale digital ecosystem for smallholder farmers featuring AI-driven crop diagnosis, voice-first multilingual advisory, and a direct-to-wholesaler transparent auction platform.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
