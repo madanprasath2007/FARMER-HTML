@@ -6,12 +6,14 @@ import { DiagnosisResult } from '../types';
 const Diagnosis: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setError(null);
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = (reader.result as string).split(',')[1];
@@ -24,12 +26,13 @@ const Diagnosis: React.FC = () => {
 
   const processImage = async (base64: string) => {
     setLoading(true);
+    setResult(null);
     try {
       const data = await analyzeCropImage(base64);
       setResult(data);
-    } catch (error) {
-      console.error(error);
-      alert("Error processing diagnosis. Check API key.");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Analysis failed. Please check your connection and API configuration.");
     } finally {
       setLoading(false);
     }
@@ -45,11 +48,13 @@ const Diagnosis: React.FC = () => {
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="aspect-square bg-white border-2 border-dashed border-slate-300 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-colors relative overflow-hidden group"
+            onClick={() => !loading && fileInputRef.current?.click()}
+            className={`aspect-square bg-white border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden group ${
+              loading ? 'opacity-50 cursor-wait' : 'hover:border-emerald-500 border-slate-300'
+            }`}
           >
             {preview ? (
-              <img src={preview} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="Preview" />
+              <img src={preview} className="absolute inset-0 w-full h-full object-cover opacity-90" alt="Preview" />
             ) : (
               <div className="text-center p-8">
                 <i className="fa-solid fa-camera text-4xl text-slate-300 mb-4 group-hover:text-emerald-500 transition-colors"></i>
@@ -68,7 +73,7 @@ const Diagnosis: React.FC = () => {
           <button 
             disabled={loading}
             onClick={() => fileInputRef.current?.click()}
-            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold hover:bg-emerald-700 transition disabled:opacity-50"
+            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold hover:bg-emerald-700 transition disabled:bg-slate-300"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -76,11 +81,18 @@ const Diagnosis: React.FC = () => {
               </span>
             ) : "Scan New Crop"}
           </button>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm flex gap-3">
+              <i className="fa-solid fa-triangle-exclamation mt-1"></i>
+              <p>{error}</p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
           {result ? (
-            <div className="glass p-8 rounded-3xl border border-emerald-100 shadow-xl animate-in fade-in duration-500">
+            <div className="glass p-8 rounded-3xl border border-emerald-100 shadow-xl animate-in fade-in zoom-in duration-500">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-1">Diagnosis Result</h3>
@@ -109,7 +121,7 @@ const Diagnosis: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="h-full border-2 border-slate-100 rounded-3xl flex items-center justify-center bg-slate-50 p-12 text-center">
+            <div className="h-full min-h-[300px] border-2 border-slate-100 rounded-3xl flex items-center justify-center bg-slate-50 p-12 text-center">
               <div className="text-slate-400">
                 <i className="fa-solid fa-microscope text-5xl mb-4 opacity-20"></i>
                 <p className="italic">Analysis results will appear here after scanning.</p>
